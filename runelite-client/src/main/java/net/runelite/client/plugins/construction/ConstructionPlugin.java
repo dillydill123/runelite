@@ -77,7 +77,9 @@ public class ConstructionPlugin extends Plugin
 			isOnBuild = false;
 		}
 
-		removeWalkHereEntry();
+		removeEntry("walk here");
+		removeEntry("sit-on");
+		removeEntry("teleport");
 
 		String leftClick = isOnBuild ? "build" : "remove";
 
@@ -85,7 +87,7 @@ public class ConstructionPlugin extends Plugin
 
 	}
 
-	public void removeWalkHereEntry()
+	private void removeEntry(final String optionToRemove)
 	{
 		MenuEntry[] clientMenuEntries = client.getMenuEntries();
 
@@ -94,7 +96,7 @@ public class ConstructionPlugin extends Plugin
 		for (int i = 0; i < clientMenuEntries.length; i++)
 		{
 			String option = Text.removeTags(clientMenuEntries[i].getOption()).toLowerCase();
-			if (option.equals("walk here"))
+			if (option.equals(optionToRemove))
 			{
 				newMenuEntries.remove(i);
 				break;
