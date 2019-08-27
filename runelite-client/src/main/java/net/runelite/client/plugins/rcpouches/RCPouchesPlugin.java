@@ -24,10 +24,14 @@
  */
 package net.runelite.client.plugins.rcpouches;
 
+import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.MenuEntryAdded;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -46,8 +50,34 @@ public class RCPouchesPlugin extends Plugin
 
 	private static final int FIRE_ALTAR = 10315;
 
+	private static AltarMode altarMode;
+
 	@Inject
 	private Client client;
+
+	@Inject
+	private RCPouchesConfig config;
+
+	@Override
+	public void startUp()
+	{
+		altarMode = config.AltarMode();
+	}
+
+	@Provides
+	public RCPouchesConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(RCPouchesConfig.class);
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (event.getGroup().equals("rcpouches"))
+		{
+			altarMode = config.AltarMode();
+		}
+	}
 
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded event)
@@ -61,7 +91,10 @@ public class RCPouchesPlugin extends Plugin
 		final String target = Text.removeTags(event.getTarget()).toLowerCase();
 
 		swapRCPouchesMenuEntries(option, target);
-		swapDuelingRingMenuEntries(option, target);
+		if (altarMode == AltarMode.LAVAS)
+		{
+			swapDuelingRingMenuEntries(option, target);
+		}
 
 	}
 
@@ -73,15 +106,25 @@ public class RCPouchesPlugin extends Plugin
 			return;
 		}
 
-		String leftClick;
+		String leftClick = "fill";
 		final int region = client.getLocalPlayer().getWorldLocation().getRegionID();
-		switch (region)
+		final WorldPoint loc = client.getLocalPlayer().getWorldLocation();
+		switch (altarMode)
 		{
-			case FIRE_ALTAR:
-				leftClick = "empty";
+			case LAVAS:
+				switch (region)
+				{
+					case FIRE_ALTAR:
+						leftClick = "empty";
+						break;
+				}
 				break;
-			default:
-				leftClick = "fill";
+			case ZMI:
+				if (loc.getX() >= 3051 && loc.getX() <= 3067 &&
+					loc.getY() >= 5572 && loc.getY() <= 5588)
+				{
+					leftClick = "empty";
+				}
 				break;
 		}
 
@@ -98,6 +141,7 @@ public class RCPouchesPlugin extends Plugin
 
 		String leftClick;
 		final int region = client.getLocalPlayer().getWorldLocation().getRegionID();
+		System.out.println(client.getLocalPlayer().getWorldLocation());
 		switch (region)
 		{
 			case FIRE_ALTAR:
